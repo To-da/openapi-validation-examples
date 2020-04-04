@@ -1,5 +1,7 @@
 package com.toda.openapi.validatedSpringRestApi.fuel
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.Headers
 import com.github.kittinunf.fuel.core.Method
@@ -16,14 +18,41 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
 import io.ktor.http.URLProtocol
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+import org.slf4j.LoggerFactory
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import kotlin.system.measureTimeMillis
 
+private val logger = KotlinLogging.logger {}
+
 @Service
 class FuelClient {
+
+    @EventListener(ApplicationReadyEvent::class)
+    fun logging() {
+        logger.trace { "trace" }
+        logger.debug { "debug" }
+        logger.info { "info" }
+        logger.error { "error" }
+
+        setLogLevel("trace")
+        logger.info { "set trace logging level }
+
+        logger.trace { "trace" }
+        logger.debug { "debug" }
+        logger.info { "info" }
+        logger.error { "error" }
+
+        setLogLevel("info")
+    }
+
+    private fun setLogLevel(logLevel: String) {
+        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        loggerContext.loggerList.forEach { it.level = Level.toLevel(logLevel) }
+    }
 
     @EventListener(ApplicationReadyEvent::class)
     fun callApiKtor() = runBlocking {

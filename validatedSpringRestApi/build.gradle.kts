@@ -23,6 +23,7 @@ dependencies {
 	implementation("io.ktor:ktor-client-core-jvm:1.3.2")
 	implementation("io.ktor:ktor-client-apache:1.3.2")
 	implementation("io.ktor:ktor-client-logging-jvm:1.3.2")
+	implementation("io.github.microutils:kotlin-logging:1.7.8")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
