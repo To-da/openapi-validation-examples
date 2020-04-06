@@ -1,0 +1,67 @@
+version: '3.7'
+
+x-java-opts: &java-opts
+  JAVA_OPTS: -Xmx96m
+
+services:
+  edge-router:
+    image: "traefik:v2.2"
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:3000"
+      - "--entrypoints.traefik.address=:3001"
+      - "--entrypoints.web.http.middlewares=sec-headers@docker"
+      - "--accesslog=true"
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.add-slash.redirectregex.regex=^(https?://[^/]+/[a-z0-9_-]+)$$"
+      - "traefik.http.middlewares.add-slash.redirectregex.replacement=$${1}/"
+      - "traefik.http.middlewares.add-slash.redirectregex.permanent=true"
+      # web-security related headers
+      - "traefik.http.middlewares.sec-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.sec-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.sec-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.sec-headers.headers.referrerPolicy=same-origin"
+      - "traefik.http.middlewares.sec-headers.headers.featurePolicy=geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';"
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8888:8080"
+    depends_on:
+      - edge-router
+    environment:
+      URLS: >-
+        [
+          { url: '/api/open-api', name: 'Servlet Spring JSON:API' }
+        ]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.swagger-ui.rule=PathPrefix(`/swagger-ui`)"
+      - "traefik.http.routers.swagger-ui.entrypoints=web"
+      - "traefik.http.services.swagger-ui.loadbalancer.server.port=8080"
+      - "traefik.http.routers.swagger-ui.middlewares=add-slash,strip-docs"
+      - "traefik.http.middlewares.strip-docs.stripprefix.prefixes=/swagger-ui"
+
+  validated-spring-rest-api:
+    build: validated-spring-rest-api
+    tty: true
+    ports:
+      - "8090:8090"
+    depends_on:
+      - swagger-ui
+    environment:
+      <<: *java-opts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.validated-spring-rest-api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.validated-spring-rest-api.entrypoints=web"
+      - "traefik.http.services.validated-spring-rest-api.loadbalancer.server.port=8090"
