@@ -14,4 +14,8 @@ Examples of JSR303 validation with OpenAPI
 [localhost:3000/swagger-ui](localhost:3000/swagger-ui)
 
 How to try locally POST endpoint:
-`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8090/api/employees/1/vacations -v`
+`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8090/api/employees/1/vacations -v
+
+# Links
+- [https://openapi.tools]()
+- [springdoc library](https://github.com/springdoc/springdoc-openapi)
