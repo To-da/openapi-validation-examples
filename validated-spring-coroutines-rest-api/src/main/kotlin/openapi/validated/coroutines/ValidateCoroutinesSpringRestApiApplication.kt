@@ -20,11 +20,16 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
+import org.springframework.core.StandardReflectionParameterNameDiscoverer
 import org.springframework.http.ResponseEntity
 import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -46,6 +51,20 @@ class ValidatedCoroutinesSpringRestApiApplication
 
 fun main(args: Array<String>) {
     runApplication<ValidatedCoroutinesSpringRestApiApplication>(*args)
+}
+
+@Configuration
+class ValidationConfig {
+
+    /**
+     * @see https://github.com/spring-projects/spring-framework/issues/23152
+     * Replaced default [org.springframework.core.KotlinReflectionParameterNameDiscoverer]
+     */
+    @Bean
+    @Primary
+    fun validator() = LocalValidatorFactoryBean().apply {
+        setParameterNameDiscoverer(StandardReflectionParameterNameDiscoverer())
+    }
 }
 
 /**
