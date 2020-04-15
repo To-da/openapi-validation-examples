@@ -27,6 +27,5 @@ Coroutines API:
 # Links
 - [https://openapi.tools]()
 - [springdoc library](https://github.com/springdoc/springdoc-openapi)
-
-# TODO
-- Different documentation tool + aggregation ([reDoc](https://github.com/Redocly/redoc)
+- [reDoc](https://github.com/Redocly/redoc)
+- ReDoc aggregation of more specs ([reDocMoreSpecs](https://github.com/volbrene/redoc) (not used in this project)

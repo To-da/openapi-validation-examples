@@ -53,6 +53,21 @@ services:
       - "traefik.http.routers.swagger-ui.middlewares=add-slash,strip-docs"
       - "traefik.http.middlewares.strip-docs.stripprefix.prefixes=/swagger-ui"
 
+  redoc:
+    image: redocly/redoc
+    ports:
+      - "8889:80"
+    depends_on:
+      - edge-router
+    environment:
+      SPEC_URL: /api/coroutines/open-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redoc.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.redoc.entrypoints=web"
+      - "traefik.http.services.redoc.loadbalancer.server.port=80"
+      - "traefik.http.routers.redoc.middlewares=add-slash,strip-docs"
+
   validated-spring-rest-api:
     build: validated-spring-rest-api
     tty: true
