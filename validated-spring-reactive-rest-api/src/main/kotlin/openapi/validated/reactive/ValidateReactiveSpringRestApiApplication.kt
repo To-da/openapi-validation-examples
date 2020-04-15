@@ -1,6 +1,5 @@
-package com.toda.openapi.validated.servlet
+package com.toda.openapi.validated.reactive
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
@@ -22,6 +21,7 @@ import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.http.ResponseEntity
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
@@ -32,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import org.springframework.web.util.UriComponentsBuilder
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toMono
 import java.time.LocalDate
 import javax.validation.constraints.Email
 import javax.validation.constraints.FutureOrPresent
@@ -42,10 +44,10 @@ import javax.validation.constraints.NotEmpty
 private val logger = KotlinLogging.logger {}
 
 @SpringBootApplication
-class ValidatedServletSpringRestApiApplication
+class ValidatedReactiveSpringRestApiApplication
 
 fun main(args: Array<String>) {
-    runApplication<ValidatedServletSpringRestApiApplication>(*args)
+    runApplication<ValidatedReactiveSpringRestApiApplication>(*args)
 }
 
 /**
@@ -68,7 +70,7 @@ class OpenApiDescription
 
 @RestController
 @RequestMapping("/api/employees/{employeeId}/vacations")
-@Validated
+// @Validated - Causing failures
 @Tag(name = "employee", description = "Everything employee related.")
 class EmployeeController(private val vacationService: VacationService) {
 
@@ -80,8 +82,8 @@ class EmployeeController(private val vacationService: VacationService) {
                                 @RequestParam(required = false, defaultValue = "false")
                                 // most of the info (name, in, required, type) retrieved from Spring/declaration
                                 @Parameter(description = "specified if output should be expanded (true/false)")
-                                expanded: Boolean = false): EmployeeVacationListDto =
-            vacationService.getEmployeeVacationList(employeeId)
+                                expanded: Boolean = false): Mono<EmployeeVacationListDto> =
+            vacationService.getEmployeeVacationList(employeeId).toMono()
 
     @PostMapping
     @Operation(summary = "Employee vacation set resource",
@@ -90,11 +92,14 @@ class EmployeeController(private val vacationService: VacationService) {
                         content = [Content(mediaType = "application/json")])
             ])
     fun addEmployeeVacation(@PathVariable employeeId: EmployeeId,
-                            @Validated @RequestBody validation: VacationDto
-    ): ResponseEntity<Unit> {
-        val vacationId = vacationService.addVacationToEmployee(employeeId, validation)
-        val locationUri = ServletUriComponentsBuilder.fromCurrentRequest().pathSegment("{vacationId}")
-        return ResponseEntity.created(locationUri.build(vacationId)).build()
+                            @Validated @RequestBody vacation: Mono<VacationDto>,
+                            serverHttpRequest: ServerHttpRequest
+    ): Mono<ResponseEntity<Unit>> {
+        return vacation.map {
+            val vacationId = vacationService.addVacationToEmployee(employeeId, it)
+            val locationUri = UriComponentsBuilder.fromUri(serverHttpRequest.uri).pathSegment("{vacationId}")
+            ResponseEntity.created(locationUri.build(vacationId)).body(Unit)
+        }
     }
 }
 
@@ -103,7 +108,7 @@ class EmployeeController(private val vacationService: VacationService) {
 class VacationController {
 
     @GetMapping("/{vacationType}")
-    fun getVacationDescription(@PathVariable vacationType: VacationType) = vacationType
+    fun getVacationDescription(@PathVariable vacationType: VacationType) = vacationType.toMono()
 
 }
 
@@ -173,5 +178,4 @@ class VacationServiceInMemory : VacationService {
         logger.info { validation }
         return 5
     }
-
 }

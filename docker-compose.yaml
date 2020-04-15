@@ -41,7 +41,9 @@ services:
     environment:
       URLS: >-
         [
-          { url: '/api/open-api', name: 'Servlet Spring JSON:API' }
+          { url: '/api/servlet/open-api', name: 'Servlet Spring JSON:API' },
+          { url: '/api/reactive/open-api', name: 'WebFlux Spring JSON:API' },
+          { url: '/api/coroutines/open-api', name: 'Coroutines Spring JSON:API' }
         ]
     labels:
       - "traefik.enable=true"
@@ -62,6 +64,36 @@ services:
       <<: *java-opts
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.validated-spring-rest-api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.validated-spring-rest-api.rule=PathPrefix(`/api/servlet`)"
       - "traefik.http.routers.validated-spring-rest-api.entrypoints=web"
       - "traefik.http.services.validated-spring-rest-api.loadbalancer.server.port=8090"
+
+  validated-spring-reactive-rest-api:
+    build: validated-spring-reactive-rest-api
+    tty: true
+    ports:
+      - "8093:8093"
+    depends_on:
+      - swagger-ui
+    environment:
+      <<: *java-opts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.validated-spring-reactive-rest-api.rule=PathPrefix(`/api/reactive`)"
+      - "traefik.http.routers.validated-spring-reactive-rest-api.entrypoints=web"
+      - "traefik.http.services.validated-spring-reactive-rest-api.loadbalancer.server.port=8093"
+
+  validated-spring-coroutines-rest-api:
+    build: validated-spring-coroutines-rest-api
+    tty: true
+    ports:
+      - "8095:8095"
+    depends_on:
+      - swagger-ui
+    environment:
+      <<: *java-opts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.validated-spring-coroutines-rest-api.rule=PathPrefix(`/api/coroutines`)"
+      - "traefik.http.routers.validated-spring-coroutines-rest-api.entrypoints=web"
+      - "traefik.http.services.validated-spring-coroutines-rest-api.loadbalancer.server.port=8095"

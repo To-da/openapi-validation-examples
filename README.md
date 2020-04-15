@@ -14,7 +14,15 @@ Examples of JSR303 validation with OpenAPI
 [localhost:3000/swagger-ui](localhost:3000/swagger-ui)
 
 How to try locally POST endpoint:
-`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8090/api/employees/1/vacations -v
+Servlet API:
+`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8090/api/employees/1/vacations -v`
+
+WebFlux API:
+`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8093/api/employees/1/vacations -v`
+
+Coroutines API:
+`curl -X POST -H "content-type: application/json" -d "@payload/employeeVacation.json" localhost:8095/api/employees/1/vacations -v`
+
 
 # Links
 - [https://openapi.tools]()

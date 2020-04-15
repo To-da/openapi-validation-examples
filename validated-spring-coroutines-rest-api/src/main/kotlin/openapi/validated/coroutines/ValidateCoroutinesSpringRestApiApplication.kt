@@ -1,6 +1,5 @@
-package com.toda.openapi.validated.servlet
+package com.toda.openapi.validated.coroutines
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
@@ -22,6 +21,7 @@ import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.http.ResponseEntity
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import org.springframework.web.util.UriComponentsBuilder
 import java.time.LocalDate
 import javax.validation.constraints.Email
 import javax.validation.constraints.FutureOrPresent
@@ -42,10 +42,10 @@ import javax.validation.constraints.NotEmpty
 private val logger = KotlinLogging.logger {}
 
 @SpringBootApplication
-class ValidatedServletSpringRestApiApplication
+class ValidatedCoroutinesSpringRestApiApplication
 
 fun main(args: Array<String>) {
-    runApplication<ValidatedServletSpringRestApiApplication>(*args)
+    runApplication<ValidatedCoroutinesSpringRestApiApplication>(*args)
 }
 
 /**
@@ -74,13 +74,13 @@ class EmployeeController(private val vacationService: VacationService) {
 
     @GetMapping
     @Operation(summary = "Employee vacations list resource")
-    fun getEmployeeVacationList(@PathVariable
-                                @Min(value = 1, message = "id must be greater than or equal to 1")
-                                employeeId: EmployeeId,
-                                @RequestParam(required = false, defaultValue = "false")
-                                // most of the info (name, in, required, type) retrieved from Spring/declaration
-                                @Parameter(description = "specified if output should be expanded (true/false)")
-                                expanded: Boolean = false): EmployeeVacationListDto =
+    suspend fun getEmployeeVacationList(@PathVariable
+                                        @Min(value = 1, message = "id must be greater than or equal to 1")
+                                        employeeId: EmployeeId,
+                                        @RequestParam(required = false, defaultValue = "false")
+                                        // most of the info (name, in, required, type) retrieved from Spring/declaration
+                                        @Parameter(description = "specified if output should be expanded (true/false)")
+                                        expanded: Boolean = false): EmployeeVacationListDto =
             vacationService.getEmployeeVacationList(employeeId)
 
     @PostMapping
@@ -89,12 +89,13 @@ class EmployeeController(private val vacationService: VacationService) {
                 ApiResponse(responseCode = "201", headers = [Header(name = "Location")],
                         content = [Content(mediaType = "application/json")])
             ])
-    fun addEmployeeVacation(@PathVariable employeeId: EmployeeId,
-                            @Validated @RequestBody validation: VacationDto
+    suspend fun addEmployeeVacation(@PathVariable employeeId: EmployeeId,
+                                    @Validated @RequestBody vacation: VacationDto,
+                                    serverHttpRequest: ServerHttpRequest
     ): ResponseEntity<Unit> {
-        val vacationId = vacationService.addVacationToEmployee(employeeId, validation)
-        val locationUri = ServletUriComponentsBuilder.fromCurrentRequest().pathSegment("{vacationId}")
-        return ResponseEntity.created(locationUri.build(vacationId)).build()
+        val vacationId = vacationService.addVacationToEmployee(employeeId, vacation)
+        val locationUri = UriComponentsBuilder.fromUri(serverHttpRequest.uri).pathSegment("{vacationId}")
+        return ResponseEntity.created(locationUri.build(vacationId)).body(Unit)
     }
 }
 
@@ -103,7 +104,7 @@ class EmployeeController(private val vacationService: VacationService) {
 class VacationController {
 
     @GetMapping("/{vacationType}")
-    fun getVacationDescription(@PathVariable vacationType: VacationType) = vacationType
+    suspend fun getVacationDescription(@PathVariable vacationType: VacationType) = vacationType
 
 }
 
@@ -173,5 +174,4 @@ class VacationServiceInMemory : VacationService {
         logger.info { validation }
         return 5
     }
-
 }
