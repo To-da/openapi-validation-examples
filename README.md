@@ -29,3 +29,4 @@ Coroutines API:
 - [springdoc library](https://github.com/springdoc/springdoc-openapi)
 - [reDoc](https://github.com/Redocly/redoc)
 - ReDoc aggregation of more specs ([reDocMoreSpecs](https://github.com/volbrene/redoc) (not used in this project)
+- [Validation API tutorial](https://www.baeldung.com/javax-validation-method-constraints)
