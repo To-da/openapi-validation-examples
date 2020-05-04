@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
+import java.lang.annotation.Inherited
 import java.time.LocalDate
 import javax.validation.constraints.Email
 import javax.validation.constraints.FutureOrPresent
@@ -93,6 +94,7 @@ class EmployeeController(private val vacationService: VacationService) {
 
     @GetMapping
     @Operation(summary = "Employee vacations list resource")
+    @ApiResponse404
     suspend fun getEmployeeVacationList(@PathVariable
                                         @Min(value = 1, message = "id must be greater than or equal to 1")
                                         employeeId: EmployeeId,
@@ -194,3 +196,8 @@ class VacationServiceInMemory : VacationService {
         return 5
     }
 }
+
+@kotlin.annotation.Target(AnnotationTarget.TYPE, AnnotationTarget.FUNCTION, AnnotationTarget.ANNOTATION_CLASS)
+@kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
+@ApiResponse(responseCode = "404")
+annotation class ApiResponse404(val description: String = "Entity not available")
