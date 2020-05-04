@@ -3,6 +3,15 @@ plugins {
     id("io.spring.dependency-management")
     kotlin("jvm")
     kotlin("plugin.spring")
+    id("com.github.johnrengelman.processes") version "0.5.0"
+    id("org.springdoc.openapi-gradle-plugin") version "1.0.0"
+}
+
+openApi {
+    apiDocsUrl.set("http://localhost:8095/api/coroutines/open-api")
+    outputDir.set(file("${project.projectDir}/src/main/resources/openapi"))
+    outputFileName.set("open-api-spec.json")
+    waitTimeInSeconds.set(10)
 }
 
 dependencies {
